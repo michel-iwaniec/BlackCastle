@@ -318,7 +318,11 @@ inline void update_screen_column_from_buf(UBYTE pos)
                   &buf[wmod]);
 }
 
+#ifdef NINTENDO_NES
+void move_sprite_clip(uint8_t nb, uint8_t x, uint8_t y) __no_overlay_locals;
+#else
 void move_sprite_clip(uint8_t nb, uint8_t x, uint8_t y);
+#endif
 
 inline void set_sprite_flip(uint8_t nb, uint8_t flip)
 {

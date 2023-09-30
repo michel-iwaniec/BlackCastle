@@ -1056,7 +1056,11 @@ void enter_end(void)
     }
 }
 
+#ifdef NINTENDO_NES
+void move_sprite_clip(uint8_t nb, uint8_t x, uint8_t y) __no_overlay_locals
+#else
 void move_sprite_clip(uint8_t nb, uint8_t x, uint8_t y)
+#endif
 {
 #ifdef CLIP_SPRITES_X
     if(x >= (8 * VIEWPORT_X_OFS - 8) && x < (8 * (VIEWPORT_X_OFS + VIEWPORT_WIDTH + 0)) && y < (8 * (VIEWPORT_Y_OFS + VIEWPORT_HEIGHT)))
