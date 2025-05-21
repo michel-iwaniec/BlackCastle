@@ -16,7 +16,7 @@ void lcd_isr(void) {
             if((shake & 1) == 1) {
                 scroll_bkg(0,1);
             } else {
-                scroll_bkg(0,-1);
+                scroll_bkg(0, (uint8_t)(DEVICE_SCREEN_BUFFER_HEIGHT*8 - 1));
             }
         }
     }
