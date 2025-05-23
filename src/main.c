@@ -2,11 +2,13 @@
 
 #include "global.h"
 
-#if defined(NINTENDO)
+#if defined(NINTENDO) || defined(NINTENDO_NES)
 
 void lcd_isr(void) {
     if (game_state == GS_LEVEL) {
+#if defined(NINTENDO)
         while(STAT_REG & STATF_LCD);
+#endif
         move_bkg(scroll_pos,0);
         SHOW_SPRITES;
         if (shake != 0) {
@@ -14,7 +16,7 @@ void lcd_isr(void) {
             if((shake & 1) == 1) {
                 scroll_bkg(0,1);
             } else {
-                scroll_bkg(0,-1);
+                scroll_bkg(0, (uint8_t)(DEVICE_SCREEN_BUFFER_HEIGHT*8 - 1));
             }
         }
     }
@@ -58,47 +60,6 @@ void vbl_isr(void) {
 void lcd_isr(void) {
 }
 
-#elif defined(NINTENDO_NES)
-
-extern uint8_t _lcd_scanline;
-
-void vbl_isr(void) {
-    if (game_state == GS_LEVEL) {
-        move_bkg(scroll_pos_with_shake,0);
-        if (shake != 0) {
-            shake--;
-            if( (shake & 1) == 1 ) {
-                scroll_pos_with_shake = (UBYTE)scroll_pos + 1;
-            } else {
-                scroll_pos_with_shake = (UBYTE)scroll_pos - 1;
-            }
-        } else {
-            scroll_pos_with_shake = (UBYTE)scroll_pos;
-        }
-    } else {
-        scroll_pos_with_shake = (UBYTE)scroll_pos;
-    }
-    _lcd_scanline = 8;
-}
-
-void lcd_isr(void) {
-    if(_lcd_scanline == 8)
-    {
-        // Start of status bar
-        move_bkg(0, 8);
-        HIDE_SPRITES;
-        _lcd_scanline = (VIEWPORT_Y_OFS + 2) * 8;
-    }
-    else
-    {
-        // end of status bar
-        move_bkg(scroll_pos_with_shake, (VIEWPORT_Y_OFS + 2) * 8);
-        if( game_state == GS_LEVEL ) {
-            SHOW_SPRITES;
-        }
-    }
-}
-
 #endif
 
 void main(void)
@@ -113,10 +74,11 @@ void main(void)
 
 #if defined(NINTENDO)
     BGP_REG = 0x00;
-
+    STAT_REG = STATF_LYC;
+#endif
+#if defined(NINTENDO) || defined(NINTENDO_NES)
     CRITICAL {
-        LYC_REG = 0x0F;
-        STAT_REG = STATF_LYC;
+        LYC_REG = 8 * (2 + VIEWPORT_Y_OFS) - 1;
         add_LCD(lcd_isr);
         add_VBL(vbl_isr);
     }
@@ -129,10 +91,9 @@ void main(void)
     }
     set_interrupts (VBL_IFLAG);
     __WRITE_VDP_REG(VDP_R0, __READ_VDP_REG(VDP_R0) | R0_HSCRL_INH | R0_LCB);
-#elif defined(NINTENDO_NES)
-    add_VBL(vbl_isr);
+#endif
+#if defined(NINTENDO_NES)
     set_sprite_palette_entry(0,2, RGB8(255, 255, 255));
-    _lcd_scanline = 8 * (2 + VIEWPORT_Y_OFS);
 #endif
     init_sound();
 
